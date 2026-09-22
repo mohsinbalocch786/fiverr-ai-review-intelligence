@@ -1,4 +1,22 @@
+# Python
 venv/
-.env
 __pycache__/
+*.py[cod]
+
+# Environment
+.env
+
+# Jupyter
 .ipynb_checkpoints/
+
+# Private data
+data/raw/*
+data/processed/*
+
+# AI outputs
+outputs/*
+!outputs/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
