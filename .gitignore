@@ -9,13 +9,22 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 
-# Private data
+# Private data - real review exports never get committed.
+# Small synthetic sample files are explicitly kept so the repo/dashboard
+# works out of the box for anyone who clones it.
 data/raw/*
+!data/raw/sample_fiverr_reviews.csv
 data/processed/*
+!data/processed/.gitkeep
 
-# AI outputs
+# AI outputs - same rule: real analysis output stays local, sample ships.
 outputs/*
 !outputs/.gitkeep
+!outputs/sample_llm_review_analysis.csv
+
+# The notebook writes its own working copy of the AI output here - keep it
+# out of git too, for the same privacy reason as outputs/ above.
+notebooks/outputs/*
 
 # OS
 .DS_Store

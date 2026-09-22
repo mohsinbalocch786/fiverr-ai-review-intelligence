@@ -7,6 +7,11 @@ tidy DataFrame that the analytics layer and the Streamlit app can consume.
 
 Nothing here calls Ollama. The AI analysis is treated as a static,
 already-computed artifact (outputs/llm_review_analysis.csv).
+
+If the real data files aren't present (they're gitignored - see
+data/raw/.gitignore-relevant entries), every loader transparently falls
+back to the bundled sample dataset (data/raw/sample_fiverr_reviews.csv,
+outputs/sample_llm_review_analysis.csv) so the app still runs.
 """
 
 from __future__ import annotations
@@ -21,6 +26,12 @@ from src.utils import parse_json_list
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RAW_REVIEWS_PATH = PROJECT_ROOT / "data" / "raw" / "fiverr_reviews.csv"
 AI_RESULTS_PATH = PROJECT_ROOT / "outputs" / "llm_review_analysis.csv"
+
+# Real review data is gitignored (see .gitignore) so it never leaves this
+# machine. These small, synthetic datasets ship with the repo so the
+# dashboard is fully functional immediately after a fresh clone.
+SAMPLE_RAW_REVIEWS_PATH = PROJECT_ROOT / "data" / "raw" / "sample_fiverr_reviews.csv"
+SAMPLE_AI_RESULTS_PATH = PROJECT_ROOT / "outputs" / "sample_llm_review_analysis.csv"
 
 RAW_COLUMN_MAP = {
     "DESIGNATION": "designation",
@@ -38,6 +49,20 @@ AI_LIST_COLUMNS = ["strengths", "improvement_areas", "topics"]
 SENTIMENT_ORDER = ["Positive", "Neutral", "Negative", "Mixed"]
 
 
+def _resolve_path(path: str | Path, sample_path: Path) -> Path:
+    """Fall back to the bundled sample dataset if the real file is absent."""
+    path = Path(path)
+    if path.exists():
+        return path
+    return sample_path
+
+
+def using_sample_data(reviews_path: str | Path = RAW_REVIEWS_PATH) -> bool:
+    """True when the dashboard is serving the bundled sample dataset
+    because no real review export was found at `reviews_path`."""
+    return not Path(reviews_path).exists()
+
+
 @st.cache_data(show_spinner=False)
 def load_reviews(path: str | Path = RAW_REVIEWS_PATH) -> pd.DataFrame:
     """Load and clean the original Fiverr review export.
@@ -48,7 +73,7 @@ def load_reviews(path: str | Path = RAW_REVIEWS_PATH) -> pd.DataFrame:
     is assigned by row position, which is how the existing AI analysis
     output keyed its own `review_id` column.
     """
-    path = Path(path)
+    path = _resolve_path(path, SAMPLE_RAW_REVIEWS_PATH)
     if not path.exists():
         return pd.DataFrame(columns=["review_id", *RAW_COLUMN_MAP.values()])
 
@@ -78,7 +103,7 @@ def load_ai_results(path: str | Path = AI_RESULTS_PATH) -> pd.DataFrame:
     from their JSON-string form into real Python lists. Rows with
     malformed JSON simply yield empty lists rather than raising.
     """
-    path = Path(path)
+    path = _resolve_path(path, SAMPLE_AI_RESULTS_PATH)
     expected_cols = [
         "review_id", "llm_sentiment", "llm_confidence", "satisfaction",
         "strengths", "improvement_areas", "topics", "explanation",

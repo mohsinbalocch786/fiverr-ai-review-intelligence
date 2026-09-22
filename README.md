@@ -6,6 +6,10 @@ This project analyzes real Fiverr client reviews using a **cloud-hosted open-wei
 
 > Built as a portfolio project to demonstrate applied **Generative AI, LLM engineering, NLP, and data-product design** end to end: from unstructured text → structured AI judgments → decision-ready analytics.
 
+![Fiverr AI Review Intelligence — Overview dashboard](docs/screenshots/dashboard-overview.png)
+
+*Overview page — live KPIs, sentiment distribution, and gig volume, all computed from the AI analysis output. (No client names or emails appear anywhere in the dataset or UI — reviews are keyed by anonymous designation/country only.)*
+
 ---
 
 ## Why this project
@@ -89,9 +93,9 @@ Design notes:
 
 ---
 
-## Sample results (from this dataset)
+## Sample results (from the author's private dataset)
 
-*(Real output from the included 99-review dataset — not illustrative placeholders.)*
+*(Real output from the 99-review dataset used to build this project — not illustrative placeholders. This dataset is not included in the repo; see [Data & privacy](#data--privacy) below.)*
 
 | Metric | Value |
 |---|---|
@@ -123,14 +127,17 @@ Design notes:
 fiverr-review-analyze/
 │
 ├── data/
-│   ├── raw/fiverr_reviews.csv          # Original Fiverr review export
+│   ├── raw/
+│   │   ├── fiverr_reviews.csv          # ← YOUR real export goes here (gitignored, not in repo)
+│   │   └── sample_fiverr_reviews.csv   # Synthetic demo data, ships with the repo
 │   └── processed/
 │
 ├── notebooks/
 │   └── 01_fiverr_review_analysis.ipynb # LLM analysis pipeline (Ollama + Pydantic)
 │
 ├── outputs/
-│   ├── llm_review_analysis.csv         # AI analysis results (the dashboard's source of truth)
+│   ├── llm_review_analysis.csv         # ← YOUR real AI results (gitignored, not in repo)
+│   ├── sample_llm_review_analysis.csv  # Synthetic demo AI output, ships with the repo
 │   ├── charts/
 │   └── reports/
 │
@@ -145,6 +152,7 @@ fiverr-review-analyze/
 │   ├── components.py                   # KPI cards, badges, sentiment pills
 │   └── views/                          # one module per dashboard page
 │
+├── docs/screenshots/                   # README images
 └── requirements.txt
 ```
 
@@ -165,7 +173,37 @@ pip install -r requirements.txt
 streamlit run app/app.py
 ```
 
-The dashboard reads `data/raw/fiverr_reviews.csv` and `outputs/llm_review_analysis.csv` directly — **it does not call Ollama or require an API key to run.** Re-running the LLM analysis (optional) requires an `OLLAMA_API_KEY` in a local `.env` file and is done from the notebook.
+That's it — no data setup required. The dashboard ships with a small **synthetic sample dataset** (`data/raw/sample_fiverr_reviews.csv` + `outputs/sample_llm_review_analysis.csv`) and automatically falls back to it whenever your own data isn't present, so it's fully working immediately after cloning. You'll see a banner in the app whenever sample data is being used.
+
+It **does not call Ollama or require an API key to run** — it only reads the two CSVs above (or your own, below) and computes everything with pandas.
+
+---
+
+## Data & privacy
+
+The real review dataset used to build this project (99 reviews) is **intentionally excluded from this repository** — `data/raw/*` and `outputs/*` are gitignored so no client feedback data is ever committed. Only the synthetic sample files described above are tracked in git.
+
+### Using your own data
+
+```bash
+# 1. Create the folder if it doesn't already exist
+mkdir -p data/raw
+
+# 2. Drop your Fiverr review export here — this exact path is gitignored,
+#    so it will stay local and never get committed
+#    → data/raw/fiverr_reviews.csv
+
+# 3. Run notebooks/01_fiverr_review_analysis.ipynb to produce
+#    → outputs/llm_review_analysis.csv
+#    (requires OLLAMA_API_KEY in a local .env file — see .env.example-style
+#    usage in the notebook; never commit this key)
+
+# 4. Restart the dashboard - it automatically prefers your real data
+#    over the bundled sample the moment both files exist
+streamlit run app/app.py
+```
+
+Expected raw CSV columns: `#, DESIGNATION, COUNTRY, STARS, DURATION, AGE, REVIEW, GIG, SCREENSHOTS` (see `src/data_loader.py` for exact parsing/cleaning rules — it also tolerates a stray pivot table or blank rows tacked onto the sheet, which is what real-world exports tend to look like).
 
 ---
 
